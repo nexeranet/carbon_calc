@@ -1,0 +1,7 @@
+.env
+# ide
+.idea
+.vscode
+
+# folders
+mocks
