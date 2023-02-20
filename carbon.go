@@ -19,14 +19,14 @@ import (
 // biomass - biomass expansion factor for conversion of tree stem biomass to
 // above-ground tree biomass, for tree l depending on tree species / forest type
 // ratio - root-shoot ratio for tree l depending on its specie / forest type
-func CarbonPerTree(fraction float64, radius float64, height float64, form float64, density float64, biomass float64, ratio float64) float64 {
+func CarbonPerTree(fraction, radius, height, form, density, biomass, ratio float64) float64 {
 	if fraction == 0 {
 		fraction = 0.47
 	}
 	if form == 0 {
 		form = 0.25
 	}
-	return (44 / 12) * fraction * CircleArea(radius) * height * form * 1.2 * density * biomass * (1 + ratio)
+	return (44.0 / 12.0) * fraction * CircleArea(radius) * height * form * 1.2 * density * biomass * (1 + ratio)
 }
 
 // Carbon/ha stored in sample plot p of monitoring zone
@@ -40,10 +40,11 @@ func CarbonStoredInPlot(sum float64, area float64) float64 {
 // sumOfPlots - carbon/ha stored in sample plot of monitoring zone
 // area - area of monitoring zone
 // numPlots - number of sample plots in monitoring zone
-func CarbonStoredInEachMonitoringZone(sumOfPlots, numPlots, area float64) float64 {
+func CarbonStoredInMonitoringZone(sumOfPlots, numPlots, area float64) float64 {
 	return (sumOfPlots / numPlots) * area
 }
 
+// si^2_i
 // Variance of tree biomass per hectare across all sample plots in monitoring zone
 // carbonStoredPlots - an array of carbon in each plot in the monitoring zone
 func VarianceOfTreeBiomass(carbonStoredPlots []float64) float64 {
@@ -121,5 +122,5 @@ func AboveGroundBiomass(cTotalCarbon, ratio, cfTree, area float64) float64 {
 	if cfTree == 0 {
 		cfTree = 0.47
 	}
-	return cTotalCarbon * (12 / 44) * (1 / cfTree) * (1/1 + ratio) * (1 / area)
+	return cTotalCarbon * (12.0 / 44.0) * (1 / cfTree) * (1/(1 + ratio)) * (1 / area)
 }
