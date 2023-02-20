@@ -23,11 +23,8 @@ const (
 
 // TODO: Ask @TM about this values
 
-const RationCarbonPerTree float64 = float64(44) / 12
-const CoefficientCarbonPerTree float64 = 1.2
-
-const DefaultCarbonFractionofTreeBiomass float64 = 0.47
-const DefaultFormFactorOfTheTree float64 = 0.25
+// const RationCarbonPerTree float64 = float64(44) / 12
+// const CoefficientCarbonPerTree float64 = 1.2
 
 var DensityOverBarkOfTrees map[ForestType]map[TreeSpecies]float64 = map[ForestType]map[TreeSpecies]float64{
 	ForestTypeTropicalSubtropical: {
