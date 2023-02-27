@@ -19,7 +19,11 @@ import (
 // biomass - biomass expansion factor for conversion of tree stem biomass to
 // above-ground tree biomass, for tree l depending on tree species / forest type
 // ratio - root-shoot ratio for tree l depending on its specie / forest type
+// TODO: add validation function
 func CarbonPerTree(fraction, radius, height, form, density, biomass, ratio float64) float64 {
+    if height < 1.3 {
+        panic("Trees should be more than 1.3 m tall to be considered in the carbon calculation.")
+    }
 	if fraction == 0 {
 		fraction = 0.47
 	}

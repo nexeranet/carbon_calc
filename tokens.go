@@ -1,15 +1,5 @@
 package carbon_calc
 
-// Calculate the net emissions removal
-// emissions - emissions from other sources
-// cTotalCarbon - Conservative total carbon
-// TODO: fill this with definitions
-// baseline -
-// leakeage -
-func NetEmissionsRemoval(cTotalCarbon, baseline, leakeage, emissions float64) float64 {
-	return cTotalCarbon - baseline - leakeage - emissions
-}
-
 // Calculate the OCCs to be minted
 // To calculate the carbon credits to mint for stage T, we compute the difference
 // between the total carbon calculated for stage T and the total carbon calculated
