@@ -1,6 +1,10 @@
 package carbon_calc
 
-import "math"
+import (
+	"math"
+
+	"github.com/shopspring/decimal"
+)
 
 func Radius(circumference float64) float64 {
 	return circumference / (2 * math.Pi)
@@ -10,8 +14,8 @@ func Circumference(r float64) float64 {
 	return 2 * math.Pi * r
 }
 
-func CircleArea(r float64) float64 {
-	return math.Pi * math.Pow(r, 2)
+func CircleArea(r decimal.Decimal) decimal.Decimal {
+	return decimal.NewFromFloat(math.Pi).Mul(r.Pow(decimal.New(2, 0)))
 }
 
 func Sum(values []float64) float64 {

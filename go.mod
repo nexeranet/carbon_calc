@@ -9,6 +9,7 @@ require (
 	github.com/go-latex/latex v0.0.0-20210823091927-c0d11ff05a81 // indirect
 	github.com/go-pdf/fpdf v0.6.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+	github.com/shopspring/decimal v1.3.1 // indirect
 	golang.org/x/exp v0.0.0-20230212135524-a684f29349b6 // indirect
 	golang.org/x/image v0.4.0 // indirect
 	golang.org/x/perf v0.0.0-20230113213139-801c7ef9e5c5 // indirect

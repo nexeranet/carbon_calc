@@ -1,5 +1,9 @@
 package carbon_calc
 
+import "errors"
+
+var NotEnoughHeight = errors.New("Trees should be more than 1.3 m tall to be considered in the carbon calculation.")
+
 type ForestType string
 
 type TreeSpecies string

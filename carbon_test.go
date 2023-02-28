@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+
+	"github.com/shopspring/decimal"
 )
 
 // TODO: ask @TM about float64 precision
-// used for tests 0.0001
 func TestCarbonPerTree(t *testing.T) {
 	type Test struct {
 		fraction, radius, height, form, density, biomass, ratio float64
@@ -31,13 +32,20 @@ func TestCarbonPerTree(t *testing.T) {
 		{0, 0.05, 5, 0, DensityOverBarkOfTrees[ForestTypeTropicalSubtropical][TreeSpeciesMoist], biomass, ratio, 0.0167},
 	}
 	for i, tt := range tests {
-		result := CarbonPerTree(tt.fraction, tt.radius, tt.height, tt.form, tt.density, tt.biomass, tt.ratio)
-		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result), 64)
+		result := CarbonPerTree(
+			decimal.NewFromFloat(tt.fraction),
+			decimal.NewFromFloat(tt.radius),
+			decimal.NewFromFloat(tt.height),
+			decimal.NewFromFloat(tt.form),
+			decimal.NewFromFloat(tt.density),
+			decimal.NewFromFloat(tt.biomass),
+			decimal.NewFromFloat(tt.ratio))
+		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result.InexactFloat64()), 64)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if rounded != tt.result {
-			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result)
+			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result.InexactFloat64())
 		}
 	}
 }
@@ -54,13 +62,15 @@ func TestCarbonStoredInPlot(t *testing.T) {
 		{Sum([]float64{0.0014, 0.0005, 0.0008, 0.0012}), 0.03, 0.13},
 	}
 	for i, tt := range tests {
-		result := CarbonStoredInPlot(tt.sum, tt.area)
-		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result), 64)
+		result := CarbonStoredInPlot(
+			decimal.NewFromFloat(tt.sum),
+			decimal.NewFromFloat(tt.area))
+		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result.InexactFloat64()), 64)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if rounded != tt.result {
-			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result)
+			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result.InexactFloat64())
 		}
 	}
 }
@@ -75,13 +85,16 @@ func TestCarbonStoredInEachMonitoringZone(t *testing.T) {
 		{Sum([]float64{2.49, 2.49, 1.66}), 3, 8, 17.707},
 	}
 	for i, tt := range tests {
-		result := CarbonStoredInMonitoringZone(tt.sum, tt.num, tt.area)
-		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.3f", result), 64)
+		result := CarbonStoredInMonitoringZone(
+			decimal.NewFromFloat(tt.sum),
+			decimal.NewFromFloat(tt.num),
+			decimal.NewFromFloat(tt.area))
+		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.3f", result.InexactFloat64()), 64)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if rounded != tt.result {
-			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result)
+			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result.InexactFloat64())
 		}
 	}
 }
@@ -96,13 +109,17 @@ func TestVarianceOfTreeBiomass(t *testing.T) {
 		{[]float64{1, 2, 3, 4, 5}, 2.5},
 	}
 	for i, tt := range tests {
-		result := VarianceOfTreeBiomass(tt.plots)
-		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.3f", result), 64)
+		plots := []decimal.Decimal{}
+		for _, plot := range tt.plots {
+			plots = append(plots, decimal.NewFromFloat(plot))
+		}
+		result := VarianceOfTreeBiomass(plots)
+		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.3f", result.InexactFloat64()), 64)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if rounded != tt.result {
-			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result)
+			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result.InexactFloat64())
 		}
 	}
 }
@@ -110,22 +127,31 @@ func TestVarianceOfTreeBiomass(t *testing.T) {
 // TODO: test with real arguments
 func TestUncertaintyCarbonStored(t *testing.T) {
 	type Test struct {
-		tDelta, variance, area, sumCorbonStoredPlots float64
-		plotAreas                                    []float64
-		result                                       float64 // precision = 3
+		tDelta                               decimal.Decimal
+		variance, area, sumCorbonStoredPlots float64
+		plotAreas                            []float64
+		result                               float64 // precision = 3
 	}
 	tDelta := TDistribution(10)
 	tests := []Test{
-		{tDelta, 12, 12, 12, []float64{12, 12}, 0.523},
+		{tDelta, 12, 12, 12, []float64{12, 12}, 0.74},
 	}
 	for i, tt := range tests {
-		result := UncertaintyCarbonStored(tt.tDelta, tt.variance, tt.area, tt.sumCorbonStoredPlots, tt.plotAreas)
-		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.3f", result), 64)
+		plots := []decimal.Decimal{}
+		for _, plot := range tt.plotAreas {
+			plots = append(plots, decimal.NewFromFloat(plot))
+		}
+		result := UncertaintyCarbonStored(tt.tDelta,
+			decimal.NewFromFloat(tt.variance),
+			decimal.NewFromFloat(tt.area),
+			decimal.NewFromFloat(tt.sumCorbonStoredPlots),
+			plots)
+		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.3f", result.InexactFloat64()), 64)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if rounded != tt.result {
-			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result)
+			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result.InexactFloat64())
 		}
 	}
 }
@@ -150,9 +176,9 @@ func TestUncertaintyDiscount(t *testing.T) {
 		{0.9, 1},
 	}
 	for i, tt := range tests {
-		result := UncertaintyDiscount(tt.uncertainty)
-		if result != tt.result {
-			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result)
+		result := UncertaintyDiscount(decimal.NewFromFloat(tt.uncertainty))
+		if result.InexactFloat64() != tt.result {
+			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result.InexactFloat64())
 		}
 	}
 }
@@ -167,13 +193,15 @@ func TestConservativeTotalCarbon(t *testing.T) {
 		{12, 12, 23},
 	}
 	for i, tt := range tests {
-		result := ConservativeTotalCarbon(tt.totalCarbon, tt.uncertainty)
-		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.3f", result), 64)
+		result := ConservativeTotalCarbon(
+			decimal.NewFromFloat(tt.totalCarbon),
+			decimal.NewFromFloat(tt.uncertainty))
+		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.3f", result.InexactFloat64()), 64)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if rounded != tt.result {
-			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result)
+			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result.InexactFloat64())
 		}
 	}
 }
