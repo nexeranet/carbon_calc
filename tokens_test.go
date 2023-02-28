@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
-)
 
+	"github.com/shopspring/decimal"
+)
 
 func TestOCCBufferPool(t *testing.T) {
 	type Test struct {
@@ -18,13 +19,13 @@ func TestOCCBufferPool(t *testing.T) {
 		{12, 0.33, 3.96},
 	}
 	for i, tt := range tests {
-		result := OCCBufferPool(tt.minted, tt.percent)
-		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result), 64)
+		result := OCCBufferPool(decimal.NewFromFloat(tt.minted), tt.percent)
+		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result.InexactFloat64()), 64)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if rounded != tt.result {
-			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result)
+			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result.InexactFloat64())
 		}
 	}
 }
@@ -40,13 +41,13 @@ func TestOCCHolders(t *testing.T) {
 		{12, 0.33, 3.96},
 	}
 	for i, tt := range tests {
-		result := OCCHolders(tt.minted, tt.percent)
-		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result), 64)
+		result := OCCHolders(decimal.NewFromFloat(tt.minted), tt.percent)
+		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result.InexactFloat64()), 64)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if rounded != tt.result {
-			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result)
+			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result.InexactFloat64())
 		}
 	}
 }
@@ -61,13 +62,16 @@ func TestOCCMintedPerMonitoringZone(t *testing.T) {
 		{12, 12, 12, 12},
 	}
 	for i, tt := range tests {
-		result := OCCMintedPerMonitoringZone(tt.minted, tt.carbon, tt.zone)
-		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result), 64)
+		result := OCCMintedPerMonitoringZone(
+			decimal.NewFromFloat(tt.minted),
+			decimal.NewFromFloat(tt.carbon),
+			decimal.NewFromFloat(tt.zone))
+		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result.InexactFloat64()), 64)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if rounded != tt.result {
-			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result)
+			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result.InexactFloat64())
 		}
 	}
 }
@@ -76,19 +80,21 @@ func TestOCCMintedPerMonitoringZone(t *testing.T) {
 func TestMintedOCC(t *testing.T) {
 	type Test struct {
 		current, previous float64
-		result               float64 // precision = 3
+		result            float64 // precision = 3
 	}
 	tests := []Test{
 		{24, 12, 12},
 	}
 	for i, tt := range tests {
-		result := MintedOCC(tt.current, tt.previous)
-		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result), 64)
+		result := MintedOCC(
+			decimal.NewFromFloat(tt.current),
+			decimal.NewFromFloat(tt.previous))
+		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result.InexactFloat64()), 64)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if rounded != tt.result {
-			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result)
+			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result.InexactFloat64())
 		}
 	}
 }

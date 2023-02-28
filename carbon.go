@@ -1,7 +1,6 @@
 package carbon_calc
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/shopspring/decimal"
@@ -108,11 +107,10 @@ func UncertaintyCarbonStored(tDelta, variance, area, sumCorbonStoredPlots decima
 	b := sumCorbonStoredPlots.Div(nPlot)
 	for _, plot := range plotAreas {
 		c := plot.Div(area)
-		sumA = c.Pow(decimal.New(2, 0)).Mul(variance).Div(nPlot)
-		sumB = c.Mul(b)
+		sumA = sumA.Add(c.Pow(decimal.New(2, 0)).Mul(variance).Div(nPlot))
+		sumB = sumB.Add(c.Mul(b))
 	}
 	sumSqrt := decimal.NewFromFloat(math.Sqrt(sumA.InexactFloat64()))
-	fmt.Println(sumSqrt, math.Sqrt(sumA.InexactFloat64()), tDelta)
 	return tDelta.Mul(sumSqrt).Div(sumB)
 }
 
@@ -146,9 +144,10 @@ func ConservativeTotalCarbon(totalCarbon, uncertainty decimal.Decimal) decimal.D
 // ratio - root-shoot ratio for tree depending on its specie / forest type
 // cfTree - carbon fraction of tree biomass
 // area - area of all monitoring zones
-func AboveGroundBiomass(cTotalCarbon, ratio, cfTree, area float64) float64 {
-	if cfTree == 0 {
-		cfTree = 0.47
+func AboveGroundBiomass(cTotalCarbon, ratio, cfTree, area decimal.Decimal) decimal.Decimal {
+	if cfTree.Equal(decimal.Zero) {
+		cfTree = decimal.NewFromFloat(0.47)
 	}
-	return cTotalCarbon * (12.0 / 44.0) * (1 / cfTree) * (1 / (1 + ratio)) * (1 / area)
+	return cTotalCarbon.Mul(decimal.New(12, 0).
+		Div(decimal.New(44, 0).Mul(cfTree).Mul(decimal.New(1, 0).Add(ratio)).Mul(area)))
 }

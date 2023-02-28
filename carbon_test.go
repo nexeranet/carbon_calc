@@ -134,7 +134,7 @@ func TestUncertaintyCarbonStored(t *testing.T) {
 	}
 	tDelta := TDistribution(10)
 	tests := []Test{
-		{tDelta, 12, 12, 12, []float64{12, 12}, 0.74},
+		{tDelta, 12, 12, 12, []float64{12, 12}, 0.523},
 	}
 	for i, tt := range tests {
 		plots := []decimal.Decimal{}
@@ -218,13 +218,16 @@ func TestAboveGroundBiomass(t *testing.T) {
 		{12, 12, 0.47, 12, 0.0446},
 	}
 	for i, tt := range tests {
-		result := AboveGroundBiomass(tt.cTotalCarbon, tt.ratio, tt.cfTree, tt.area)
-		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result), 64)
+		result := AboveGroundBiomass(decimal.NewFromFloat(tt.cTotalCarbon),
+			decimal.NewFromFloat(tt.ratio),
+			decimal.NewFromFloat(tt.cfTree),
+			decimal.NewFromFloat(tt.area))
+		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.4f", result.InexactFloat64()), 64)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if rounded != tt.result {
-			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result)
+			t.Fatalf("Test number %d, expect: %f, have: %f", i, tt.result, result.InexactFloat64())
 		}
 	}
 }

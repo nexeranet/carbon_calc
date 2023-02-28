@@ -1,27 +1,29 @@
 package carbon_calc
 
+import "github.com/shopspring/decimal"
+
 // Calculate the OCCs to be minted
 // To calculate the carbon credits to mint for stage T, we compute the difference
 // between the total carbon calculated for stage T and the total carbon calculated
 // for the previously validated stage (T-1, T-2 or T-3).
-func MintedOCC(netEmmisionCurrent, netEmmissionPrevious float64) float64 {
-	return netEmmisionCurrent - netEmmissionPrevious
+func MintedOCC(netEmmisionCurrent, netEmmissionPrevious decimal.Decimal) decimal.Decimal {
+	return netEmmisionCurrent.Sub(netEmmissionPrevious)
 }
 
 // Calculate the OCCs to be sent to the buffer pool
-func OCCBufferPool(mintedOcc, percent float64) float64 {
+func OCCBufferPool(mintedOcc decimal.Decimal, percent float64) decimal.Decimal {
 	if percent == 0 {
 		percent = 0.07
 	}
-	return mintedOcc * percent
+	return mintedOcc.Mul(decimal.NewFromFloat(percent))
 }
 
 // Calculate the OCCs to be sent to the token holders
-func OCCHolders(mintedOcc, percent float64) float64 {
+func OCCHolders(mintedOcc decimal.Decimal, percent float64) decimal.Decimal {
 	if percent == 0 {
 		percent = 0.08
 	}
-	return mintedOcc * percent
+	return mintedOcc.Mul(decimal.NewFromFloat(percent))
 }
 
 // Calculate the OCCs minted per monitoring zone
@@ -31,6 +33,6 @@ func OCCHolders(mintedOcc, percent float64) float64 {
 // minted - OCCs to be minted at stage T
 // carbon - Carbon stored in all monitoring zones
 // zone - Carbon stored in monitoring zone i
-func OCCMintedPerMonitoringZone(minted, carbon, zone float64) float64 {
-	return minted * (zone / carbon)
+func OCCMintedPerMonitoringZone(minted, carbon, zone decimal.Decimal) decimal.Decimal {
+	return minted.Mul(zone.Div(carbon))
 }

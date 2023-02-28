@@ -25,3 +25,11 @@ func Sum(values []float64) float64 {
 	}
 	return sum
 }
+
+func SumDecimal(values []decimal.Decimal) decimal.Decimal {
+	sum := decimal.New(0, 0)
+	for _, value := range values {
+		sum = sum.Add(value)
+	}
+	return sum
+}
