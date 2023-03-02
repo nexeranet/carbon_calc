@@ -1,47 +1,129 @@
 package carbon_calc
 
-import "math"
+import (
+	"github.com/shopspring/decimal"
+)
 
-func BaselineInMon(manual, area, deltaTime float64) float64 {
-	return manual * area * deltaTime
+// Calculate the baseline in monitoring zone V1
+// manual - Mean change in carbon stock in trees per ha and per year → Value entered
+// per monitoring zone in the admin dashboard. If no value entered when the
+// carbon calculation is done in the backend (after stage is validated, take 0
+// as default value) ; tCO2e ha-1 yr-1
+// area - Area of baseline monitoring zone i, delineated on the basis of tree crown
+// cover at the start of the A/R CDM project activity; ha
+// deltaTime - time elapsed between current collateralized and validated stage and previous
+// validated stage (years) - take into account the end months and years of each
+// stage
+func BaselineInMonitoringZone(manual, area, deltaTime decimal.Decimal) decimal.Decimal {
+	return manual.Mul(area).Mul(deltaTime)
 }
 
 // Calculate the baseline
-func Baseline(plots []float64) float64 {
-	return Sum(plots)
+func Baseline(baselines []decimal.Decimal) decimal.Decimal {
+	return SumDecimal(baselines)
 }
 
 // Net GHG emissions from nitrogen fertilizer in the project in year
-func NetGHGEmissions(fertilizes, cO2eNdirectt, cO2eNindirectt float64) float64 {
-	return fertilizes * (cO2eNdirectt + cO2eNindirectt)
+func NetGHGEmissions(fertilizes, cO2eNdirectt, cO2eNindirectt decimal.Decimal) decimal.Decimal {
+	return fertilizes.Mul(cO2eNdirectt.Add(cO2eNindirectt))
 }
 
-func CO2eNdirectt(synthFertilizer, nContentOfSynthFertilizer, massOfOrganicFertilizer, nContentOfOrganicFertilizer, emissionFactorForNitrousOxideEmissions, globalWarmingPotential float64) float64 {
-	if synthFertilizer == 0 {
-		synthFertilizer = 0.1
+// TODO:
+func CO2eNdirectt(massSynthFertz, nContSynthFertz, massOrgFertz, nContOrgFertz, nitrOxdEmissSOC, gWarmingPotentl decimal.Decimal) decimal.Decimal {
+	if nContSynthFertz.Equal(decimal.Zero) {
+		nContSynthFertz = massSynthFertz.Mul(decimal.NewFromFloat(0.1))
 	}
-	if massOfOrganicFertilizer == 0 {
-		massOfOrganicFertilizer = 0.1
+	if nContOrgFertz.Equal(decimal.Zero) {
+		nContOrgFertz = massOrgFertz.Mul(decimal.NewFromFloat(0.1))
 	}
-	if emissionFactorForNitrousOxideEmissions == 0 {
-		emissionFactorForNitrousOxideEmissions = 0.1
+	if nitrOxdEmissSOC.Equal(decimal.Zero) {
+		nitrOxdEmissSOC = decimal.NewFromFloat(0.01)
 	}
-	if globalWarmingPotential == 0 {
-		globalWarmingPotential = 265
+	if gWarmingPotentl.Equal(decimal.Zero) {
+		gWarmingPotentl = decimal.New(265, 0)
 	}
-	return (synthFertilizer*nContentOfSynthFertilizer + massOfOrganicFertilizer*nContentOfOrganicFertilizer) * emissionFactorForNitrousOxideEmissions * 44 / 22 * globalWarmingPotential
+	b := decimal.NewFromFloat(44.0 / 28.0)
+	return massSynthFertz.Mul(nContSynthFertz).
+		Add(massOrgFertz.
+			Mul(nContOrgFertz)).
+		Mul(nitrOxdEmissSOC).
+		Mul(b).
+		Mul(gWarmingPotentl)
 }
 
-func CO2eNindirectt(nfertVolatIT, nfertLeachIT float64) float64 {
-	return nfertVolatIT + nfertLeachIT
+func CO2eNdirecttDefault(massSynthFertz, massOrgFertz decimal.Decimal) decimal.Decimal {
+	b := decimal.NewFromFloat(1.1 * 0.001 * (44.0 / 28.0) * 265)
+	return massSynthFertz.Add(massOrgFertz).Mul(b)
 }
 
-func NfertVolatIT(M_SF_i_t, NC_SF_i_t, Frac_GASF, M_OF_i_t, NC_OF_i_t, EF_Nvolat, GWP_N2O float64) float64 {
-	return math.Abs((M_SF_i_t*NC_SF_i_t*Frac_GASF)+(M_OF_i_t*NC_OF_i_t*Frac_GASF)) * EF_Nvolat * (44.00 / 22.00) * GWP_N2O
+func CO2eNindirectt(nfertVolatIT, nfertLeachIT decimal.Decimal) decimal.Decimal {
+	return nfertVolatIT.Add(nfertLeachIT)
 }
 
-func Nfert_leachIT(M_SFit, NC_SFit, M_OFit, NC_OFit, Frac_Leach, EF_NLeach, GWP_N2O float64) float64 {
-	return (M_SFit*NC_SFit + M_OFit*NC_OFit) * Frac_Leach * EF_NLeach * (44.00 / 22.00) * GWP_N2O
+func NfertVolatIT(massSynthFertz, nContSynthFertz, massOrgFertz, nContOrgFertz, allFractSynth, allFractOrg, nitrOxdEmissWS, gWarmingPotentl decimal.Decimal) decimal.Decimal {
+	if nContSynthFertz.Equal(decimal.Zero) {
+		nContSynthFertz = massSynthFertz.Mul(decimal.NewFromFloat(0.1))
+	}
+	if nContOrgFertz.Equal(decimal.Zero) {
+		nContOrgFertz = massOrgFertz.Mul(decimal.NewFromFloat(0.1))
+	}
+	if nitrOxdEmissWS.Equal(decimal.Zero) {
+		nitrOxdEmissWS = decimal.NewFromFloat(0.01)
+	}
+	if gWarmingPotentl.Equal(decimal.Zero) {
+		gWarmingPotentl = decimal.New(265, 0)
+	}
+	if allFractSynth.Equal(decimal.Zero) {
+		allFractSynth = decimal.NewFromFloat(0.1)
+	}
+	if allFractOrg.Equal(decimal.Zero) {
+		allFractOrg = decimal.NewFromFloat(0.3)
+	}
+	b := decimal.NewFromFloat(44.0 / 28.0)
+	return massSynthFertz.Mul(nContSynthFertz).
+		Mul(allFractSynth).
+		Add(massOrgFertz.Mul(nContOrgFertz).Mul(allFractOrg)).
+		Abs().
+		Mul(nitrOxdEmissWS).
+		Mul(b).
+		Mul(gWarmingPotentl)
+}
+
+func NfertVolatITDefault(massSynthFertz, massOrgFertz decimal.Decimal) decimal.Decimal {
+	return massSynthFertz.Mul(decimal.NewFromFloat(1.1 * 0.1)).
+		Add(massOrgFertz.Mul(decimal.NewFromFloat(1.1 * 0.3))).
+		Mul(decimal.NewFromFloat(0.01 * (44.0 / 28.0) * 265))
+}
+
+func NfertLeachIT(massSynthFertz, nContSynthFertz, massOrgFertz, nContOrgFertz, nFractSoil, nitrOxdEmissLR, gWarmingPotentl decimal.Decimal) decimal.Decimal {
+	if nContSynthFertz.Equal(decimal.Zero) {
+		nContSynthFertz = massSynthFertz.Mul(decimal.NewFromFloat(0.1))
+	}
+	if nContOrgFertz.Equal(decimal.Zero) {
+		nContOrgFertz = massOrgFertz.Mul(decimal.NewFromFloat(0.1))
+	}
+	if gWarmingPotentl.Equal(decimal.Zero) {
+		gWarmingPotentl = decimal.New(265, 0)
+	}
+	if nFractSoil.Equal(decimal.Zero) {
+		nFractSoil = decimal.NewFromFloat(0.3)
+	}
+	if nitrOxdEmissLR.Equal(decimal.Zero) {
+		nitrOxdEmissLR = decimal.NewFromFloat(0.0075)
+	}
+	b := decimal.NewFromFloat(44.0 / 28.0)
+	return massSynthFertz.
+		Mul(nContSynthFertz).
+		Add(massOrgFertz.Mul(nContOrgFertz)).
+		Mul(nFractSoil).
+		Mul(nitrOxdEmissLR).
+		Mul(b).
+		Mul(gWarmingPotentl)
+}
+
+func NfertLeachITDefault(massSynthFertz, massOrgFertz decimal.Decimal) decimal.Decimal {
+	b := decimal.NewFromFloat(1.1 * 0.3 * 0.0075 * (44.0 / 28.0) * 265)
+	return massSynthFertz.Add(massOrgFertz).Mul(b)
 }
 
 // Calculate the net emissions removal
@@ -50,6 +132,8 @@ func Nfert_leachIT(M_SFit, NC_SFit, M_OFit, NC_OFit, Frac_Leach, EF_NLeach, GWP_
 // TODO: fill this with definitions
 // baseline -
 // leakeage -
-func NetEmissionsRemoval(cTotalCarbon, baseline, leakeage float64, emissions ...float64) float64 {
-	return cTotalCarbon*(1-leakeage) - baseline - Sum(emissions)
+func NetEmissionsRemoval(cTotalCarbon, baseline, leakeage decimal.Decimal, emissions ...decimal.Decimal) decimal.Decimal {
+	return cTotalCarbon.Mul(decimal.New(1, 0).Sub(leakeage)).
+		Sub(baseline).
+		Sub(SumDecimal(emissions))
 }
