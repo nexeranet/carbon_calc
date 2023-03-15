@@ -225,23 +225,19 @@ func TestNfertLeachITDefault(t *testing.T) {
 
 func TestNetEmissionsRemoval(t *testing.T) {
 	type Test struct {
-		cTotalCarbon, baseline, leakeage float64
-		emissions                        []float64
+		cTotalCarbon, baseline, leakeage, emissions float64
 		result                           float64 // precision = 3
 	}
 	tests := []Test{
-		{12, 12, 22, []float64{}, -264},
+		{2.77, 0, 0.05, 0, 2.631},
+		{6.6, 0, 0.05, 0, 6.27},
 	}
 	for i, tt := range tests {
-		emms := []decimal.Decimal{}
-		for _, val := range tt.emissions {
-			emms = append(emms, decimal.NewFromFloat(val))
-		}
 		result := NetEmissionsRemoval(
 			decimal.NewFromFloat(tt.cTotalCarbon),
 			decimal.NewFromFloat(tt.baseline),
 			decimal.NewFromFloat(tt.leakeage),
-			emms...)
+			decimal.NewFromFloat(tt.emissions))
 		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.3f", result.InexactFloat64()), 64)
 		if err != nil {
 			t.Fatal(err)

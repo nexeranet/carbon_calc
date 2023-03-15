@@ -132,8 +132,8 @@ func NfertLeachITDefault(massSynthFertz, massOrgFertz decimal.Decimal) decimal.D
 // TODO: fill this with definitions
 // baseline -
 // leakeage -
-func NetEmissionsRemoval(cTotalCarbon, baseline, leakeage decimal.Decimal, emissions ...decimal.Decimal) decimal.Decimal {
+func NetEmissionsRemoval(cTotalCarbon, baseline, leakeage, emissions decimal.Decimal) decimal.Decimal {
 	return cTotalCarbon.Mul(decimal.New(1, 0).Sub(leakeage)).
 		Sub(baseline).
-		Sub(SumDecimal(emissions))
+		Sub(emissions)
 }

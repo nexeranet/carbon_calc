@@ -20,13 +20,12 @@ import (
 // biomass - biomass expansion factor for conversion of tree stem biomass to
 // above-ground tree biomass, for tree l depending on tree species / forest type
 // ratio - root-shoot ratio for tree l depending on its specie / forest type
-// TODO: add validation function
 func CarbonPerTree(fraction, radius, height, form, density, biomass, ratio decimal.Decimal) decimal.Decimal {
 	if fraction.Equal(decimal.Zero) {
 		fraction = decimal.NewFromFloat(0.47)
 	}
 	if form.Equal(decimal.Zero) {
-		form = decimal.NewFromFloat(0.25)
+		form = decimal.NewFromFloat(0.3)
 	}
 	return decimal.NewFromFloat(44.0 / 12.0).
 		Mul(fraction).
@@ -94,24 +93,30 @@ func TDistribution(freedom float64) decimal.Decimal {
 	return decimal.NewFromFloat(dist1.Quantile(0.95))
 }
 
+// plots - array contains calculated carbon in each plot
+// area - area of zone (ha)
+type CarbonedZone struct {
+	plots []decimal.Decimal
+	area  decimal.Decimal
+}
+
 // Uncertainty in carbon stock in trees
 // tDelta - t-distribution
-// variance -  variance of tree biomass
 // area - area of all monitoring zones (sum of all areas of monitoring zones)
-// sumCorbonStoredPlots - sum of carbon/ha stored in sample plot of monitoring zone
-// plotAreas - an array of plot areas in the monitoring zone
-func UncertaintyCarbonStored(tDelta, variance, area, sumCorbonStoredPlots decimal.Decimal, plotAreas []decimal.Decimal) decimal.Decimal {
-	sumA := decimal.New(0, 0)
-	sumB := decimal.New(0, 0)
-	nPlot := decimal.NewFromFloat(float64(len(plotAreas)))
-	b := sumCorbonStoredPlots.Div(nPlot)
-	for _, plot := range plotAreas {
-		c := plot.Div(area)
-		sumA = sumA.Add(c.Pow(decimal.New(2, 0)).Mul(variance).Div(nPlot))
-		sumB = sumB.Add(c.Mul(b))
+// nPlots - number of all plots of all monitoring zones
+// zones - array of zones with area and array of cabon in each plot
+func UncertaintyCarbonStored(tDelta, tArea, nPlots decimal.Decimal, zones []CarbonedZone) decimal.Decimal {
+	sumAi := decimal.New(0, 0)
+	sumAiPow := decimal.New(0, 0)
+	for _, zone := range zones {
+		nI := decimal.NewFromInt(int64(len(zone.plots)))
+		aiDiv := zone.area.Div(tArea)
+		aiDivPow := aiDiv.Pow(decimal.New(2, 0))
+		sumAi = sumAi.Add(aiDiv.Mul(SumDecimal(zone.plots).Div(nI)))
+		sumAiPow = sumAiPow.Add(aiDivPow.Mul(VarianceOfTreeBiomass(zone.plots).Div(nI)))
 	}
-	sumSqrt := decimal.NewFromFloat(math.Sqrt(sumA.InexactFloat64()))
-	return tDelta.Mul(sumSqrt).Div(sumB)
+	sumSqrt := decimal.NewFromFloat(math.Sqrt(sumAiPow.InexactFloat64()))
+	return tDelta.Mul(sumSqrt).Div(sumAi.Abs())
 }
 
 // If uncertainty > 10%, then carbon stored in monitoring zones are made
@@ -136,18 +141,32 @@ func UncertaintyDiscount(uncertainty decimal.Decimal) decimal.Decimal {
 // totalCarbon - carbon stored in all monitoring zones
 // uncertainty - uncertainty in carbon stock in trees
 func ConservativeTotalCarbon(totalCarbon, uncertainty decimal.Decimal) decimal.Decimal {
-	return totalCarbon.Sub(decimal.New(1, 0).Sub(uncertainty.Mul(UncertaintyDiscount(uncertainty))))
+	return totalCarbon.Mul(decimal.New(1, 0).Sub(uncertainty.Mul(UncertaintyDiscount(uncertainty))))
+}
+
+// TODO: change names of arguments
+// Carbon stock in trees in monitoring zone i taking into account the
+// uncertainty
+// conservativeCarbon - Carbon stock in trees in all monitoring zones taking
+// into account the uncertainty
+// carbonArea - Carbon stock in trees in monitoring zone
+// totalAreasCarbon - Carbon stock in trees in all monitoring zones
+func AreaConservativeCarbon(conservativeCarbon, carbonArea, totalAreasCarbon decimal.Decimal) decimal.Decimal {
+	return conservativeCarbon.Mul(carbonArea.Div(totalAreasCarbon))
 }
 
 // Calculate the above ground biomass
-// cTotalCarbon -  conservative total carbon
+// areaConsCarbon -  conservative total carbon in monitoring zone
 // ratio - root-shoot ratio for tree depending on its specie / forest type
 // cfTree - carbon fraction of tree biomass
 // area - area of all monitoring zones
-func AboveGroundBiomass(cTotalCarbon, ratio, cfTree, area decimal.Decimal) decimal.Decimal {
+func AboveGroundBiomass(areaConsCarbon, ratio, cfTree, area decimal.Decimal) decimal.Decimal {
 	if cfTree.Equal(decimal.Zero) {
 		cfTree = decimal.NewFromFloat(0.47)
 	}
-	return cTotalCarbon.Mul(decimal.New(12, 0).
-		Div(decimal.New(44, 0).Mul(cfTree).Mul(decimal.New(1, 0).Add(ratio)).Mul(area)))
+	return areaConsCarbon.Mul(decimal.New(12, 0)).
+		Div(decimal.New(44, 0).
+			Mul(cfTree).
+			Mul(decimal.New(1, 0).Add(ratio)).
+			Mul(area))
 }

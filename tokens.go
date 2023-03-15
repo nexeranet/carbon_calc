@@ -31,8 +31,10 @@ func OCCHolders(mintedOcc decimal.Decimal, percent float64) decimal.Decimal {
 // monitoring zone per stage to be able to burn (in the future) the equivalent
 // amount of OCCs from the buffer pool if something happens in the forest.
 // minted - OCCs to be minted at stage T
-// carbon - Carbon stored in all monitoring zones
-// zone - Carbon stored in monitoring zone i
-func OCCMintedPerMonitoringZone(minted, carbon, zone decimal.Decimal) decimal.Decimal {
-	return minted.Mul(zone.Div(carbon))
+// carbonC - Carbon stored in all monitoring zones, current stage
+// zoneC - Carbon stored in monitoring zone i, current stage
+// carbonP - Carbon stored in all monitoring zones, previous stage
+// zoneP - Carbon stored in monitoring zone i, previous stage
+func OCCMintedPerMonitoringZone(minted, carbonC, zoneC, carbonP, zoneP decimal.Decimal) decimal.Decimal {
+	return minted.Mul(zoneC.Sub(zoneP).Div(carbonC.Sub(carbonP)))
 }
