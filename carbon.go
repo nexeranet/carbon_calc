@@ -41,7 +41,7 @@ func CarbonPerTree(fraction, radius, height, form, density, biomass, ratio decim
 // Calculate the carbon stored in each tree and with params validation
 // For more comments see CarbonPerTree function
 func ValidateCarbonPerTree(fraction, radius, height, form, density, biomass, ratio decimal.Decimal) (decimal.Decimal, error) {
-	if height.Cmp(decimal.NewFromFloat32(1.3)) == -1 {
+	if height.Cmp(decimal.NewFromFloat(1.3)) == -1 {
 		return decimal.Decimal{}, NotEnoughHeight
 	}
 	return CarbonPerTree(fraction, radius, height, form, density, biomass, ratio), nil
@@ -96,24 +96,23 @@ func TDistribution(freedom float64) decimal.Decimal {
 // plots - array contains calculated carbon in each plot
 // area - area of zone (ha)
 type CarbonedZone struct {
-	plots []decimal.Decimal
-	area  decimal.Decimal
+	Plots []decimal.Decimal
+	Area  decimal.Decimal
 }
 
 // Uncertainty in carbon stock in trees
 // tDelta - t-distribution
 // area - area of all monitoring zones (sum of all areas of monitoring zones)
-// nPlots - number of all plots of all monitoring zones
 // zones - array of zones with area and array of cabon in each plot
-func UncertaintyCarbonStored(tDelta, tArea, nPlots decimal.Decimal, zones []CarbonedZone) decimal.Decimal {
+func UncertaintyCarbonStored(tDelta, tArea decimal.Decimal, zones []CarbonedZone) decimal.Decimal {
 	sumAi := decimal.New(0, 0)
 	sumAiPow := decimal.New(0, 0)
 	for _, zone := range zones {
-		nI := decimal.NewFromInt(int64(len(zone.plots)))
-		aiDiv := zone.area.Div(tArea)
+		nI := decimal.NewFromInt(int64(len(zone.Plots)))
+		aiDiv := zone.Area.Div(tArea)
 		aiDivPow := aiDiv.Pow(decimal.New(2, 0))
-		sumAi = sumAi.Add(aiDiv.Mul(SumDecimal(zone.plots).Div(nI)))
-		sumAiPow = sumAiPow.Add(aiDivPow.Mul(VarianceOfTreeBiomass(zone.plots).Div(nI)))
+		sumAi = sumAi.Add(aiDiv.Mul(SumDecimal(zone.Plots).Div(nI)))
+		sumAiPow = sumAiPow.Add(aiDivPow.Mul(VarianceOfTreeBiomass(zone.Plots).Div(nI)))
 	}
 	sumSqrt := decimal.NewFromFloat(math.Sqrt(sumAiPow.InexactFloat64()))
 	return tDelta.Mul(sumSqrt).Div(sumAi.Abs())
