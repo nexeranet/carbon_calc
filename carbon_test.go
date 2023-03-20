@@ -169,22 +169,20 @@ func TestUncertaintyCarbonStored(t *testing.T) {
 	}
 	for i, tt := range tests {
 		zones := []CarbonedZone{}
-		var tArea, nPlots float64
+		var tArea float64
 		for _, zone := range tt.zones {
 			var plots []decimal.Decimal
 			for _, item := range zone.plots {
 				plots = append(plots, decimal.NewFromFloat(item))
-				nPlots++
 			}
 			zones = append(zones, CarbonedZone{
-				plots: plots,
-				area:  decimal.NewFromFloat(zone.area),
+				Plots: plots,
+				Area:  decimal.NewFromFloat(zone.area),
 			})
 			tArea += zone.area
 		}
 		result := UncertaintyCarbonStored(tt.tDelta,
 			decimal.NewFromFloat(tArea),
-			decimal.NewFromFloat(nPlots),
 			zones)
 		rounded, err := strconv.ParseFloat(fmt.Sprintf("%.3f", result.InexactFloat64()), 64)
 		if err != nil {
