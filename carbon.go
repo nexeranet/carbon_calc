@@ -158,7 +158,7 @@ func AreaConservativeCarbon(conservativeCarbon, carbonArea, totalAreasCarbon dec
 // areaConsCarbon -  conservative total carbon in monitoring zone
 // ratio - root-shoot ratio for tree depending on its specie / forest type
 // cfTree - carbon fraction of tree biomass
-// area - area of all monitoring zones
+// area - area of monitoring zone
 func AboveGroundBiomass(areaConsCarbon, ratio, cfTree, area decimal.Decimal) decimal.Decimal {
 	if cfTree.Equal(decimal.Zero) {
 		cfTree = decimal.NewFromFloat(0.47)

@@ -1,6 +1,9 @@
 package carbon_calc
 
-import "errors"
+import (
+	"errors"
+	"github.com/shopspring/decimal"
+)
 
 var NotEnoughHeight = errors.New("Trees should be more than 1.3 m tall to be considered in the carbon calculation.")
 
@@ -8,6 +11,8 @@ type ForestType string
 
 type TreeSpecies string
 
+// TODO: ask about this to front-end team
+// TODO: change to uint constants
 const (
 	ForestTypeTropicalSubtropical ForestType = "Tropical and sub-tropical"
 	ForestTypeTemperate           ForestType = "Temperate"
@@ -25,12 +30,7 @@ const (
 	TreeSpeciesPines                       TreeSpecies = "Pines"
 )
 
-// TODO: Ask @TM about this values
-
-// const RationCarbonPerTree float64 = float64(44) / 12
-// const CoefficientCarbonPerTree float64 = 1.2
-
-var DensityOverBarkOfTrees map[ForestType]map[TreeSpecies]float64 = map[ForestType]map[TreeSpecies]float64{
+var DensityOverBarkOfTreesDict map[ForestType]map[TreeSpecies]float64 = map[ForestType]map[TreeSpecies]float64{
 	ForestTypeTropicalSubtropical: {
 		TreeSpeciesMoist: 0.55,
 		TreeSpeciesDry:   0.55,
@@ -48,7 +48,15 @@ var DensityOverBarkOfTrees map[ForestType]map[TreeSpecies]float64 = map[ForestTy
 	},
 }
 
-var BiomassExpansionFactor map[ForestType]map[TreeSpecies]float64 = map[ForestType]map[TreeSpecies]float64{
+func DensityOverBarkOfTrees(forestType ForestType, specie TreeSpecies) decimal.Decimal {
+	value, ok := DensityOverBarkOfTreesDict[forestType][specie]
+	if !ok {
+		return decimal.NewFromFloat(0.55)
+	}
+	return decimal.NewFromFloat(value)
+}
+
+var BiomassExpansionFactorDict map[ForestType]map[TreeSpecies]float64 = map[ForestType]map[TreeSpecies]float64{
 	ForestTypeTropicalSubtropical: {
 		TreeSpeciesPines:     1.3,
 		TreeSpeciesBroadleaf: 3.4,
@@ -65,10 +73,19 @@ var BiomassExpansionFactor map[ForestType]map[TreeSpecies]float64 = map[ForestTy
 	},
 }
 
+func BiomassExpansionFactor(forestType ForestType, specie TreeSpecies) decimal.Decimal {
+	value, ok := BiomassExpansionFactorDict[forestType][specie]
+	if !ok {
+		return decimal.NewFromFloat(1.15)
+	}
+	return decimal.NewFromFloat(value)
+}
+
 var RootShootRatioForTreeDict map[ForestType]map[TreeSpecies]func(v float64) float64 = map[ForestType]map[TreeSpecies]func(v float64) float64{
 	ForestTypeTropicalSubtropical: {
 		TreeSpeciesDry: func(v float64) float64 {
 			if v <= 20 {
+				// default value
 				return 0.56
 			} else {
 				return 0.28
@@ -76,6 +93,7 @@ var RootShootRatioForTreeDict map[ForestType]map[TreeSpecies]func(v float64) flo
 		},
 		TreeSpeciesMoist: func(v float64) float64 {
 			if v <= 125 {
+				// default value
 				return 0.2
 			} else {
 				return 0.24
@@ -88,6 +106,7 @@ var RootShootRatioForTreeDict map[ForestType]map[TreeSpecies]func(v float64) flo
 	ForestTypeTemperate: {
 		TreeSpeciesConiferous: func(v float64) float64 {
 			if v <= 50 {
+				// default value
 				return 0.4
 			} else if v > 50 && v <= 150 {
 				return 0.29
@@ -97,6 +116,7 @@ var RootShootRatioForTreeDict map[ForestType]map[TreeSpecies]func(v float64) flo
 		},
 		TreeSpeciesBroadleaf: func(v float64) float64 {
 			if v <= 75 {
+				// default value
 				return 0.46
 			} else if v > 75 && v <= 150 {
 				return 0.23
@@ -108,17 +128,20 @@ var RootShootRatioForTreeDict map[ForestType]map[TreeSpecies]func(v float64) flo
 	},
 }
 
-func RootShootRatioForTree(forestType ForestType, species TreeSpecies, abovegroundBiomass float64) float64 {
+// abovegroundBiomass - 0 if you want to get default value
+// TODO: return Decimal
+func RootShootRatioForTree(forestType ForestType, species TreeSpecies, abovegroundBiomass float64) decimal.Decimal {
 	if forestType == ForestTypeBoreal {
 		if abovegroundBiomass <= 75 {
-			return 0.39
+			// default value
+			return decimal.NewFromFloat(0.39)
 		} else {
-			return 0.24
+			return decimal.NewFromFloat(0.24)
 		}
 	}
 	calc, ok := RootShootRatioForTreeDict[forestType][species]
 	if !ok {
-		return 0.25
+		return decimal.NewFromFloat(0.25)
 	}
-	return calc(abovegroundBiomass)
+	return decimal.NewFromFloat(calc(abovegroundBiomass))
 }
