@@ -32,7 +32,7 @@ func TestCarbonPerTree(t *testing.T) {
 		{fraction, 0.031, 2.4, form, density, biomass, ratio, 0.0031},
 		// default value
 		{fraction, 0.05, 5, form, density, biomass, ratio, 0.0167},
-		{0, 0.05, 5, 0, DensityOverBarkOfTrees[ForestTypeTropicalSubtropical][TreeSpeciesMoist], biomass, ratio, 0.02},
+		{0, 0.05, 5, 0, density, biomass, ratio, 0.02},
 	}
 	for i, tt := range tests {
 		result := CarbonPerTree(

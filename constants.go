@@ -11,6 +11,14 @@ type ForestType string
 
 type TreeSpecies string
 
+type RainfallType int64
+
+const (
+	RainfallTypeDry RainfallType = iota
+	RainfallTypeMoist
+	RainfallTypeWet
+)
+
 // TODO: ask about this to front-end team
 // TODO: change to uint constants
 const (
@@ -20,9 +28,9 @@ const (
 )
 
 const (
-	TreeSpeciesDry                         TreeSpecies = "Dry"
-	TreeSpeciesMoist                       TreeSpecies = "Moist"
-	TreeSpeciesWet                         TreeSpecies = "Wet"
+	// TreeSpeciesDry                         TreeSpecies = "Dry"
+	// TreeSpeciesMoist                       TreeSpecies = "Moist"
+	// TreeSpeciesWet                         TreeSpecies = "Wet"
 	TreeSpeciesConiferous                  TreeSpecies = "Coniferous"
 	TreeSpeciesBroadleaf                   TreeSpecies = "Broadleaf"
 	TreeSpeciesForestTundra                TreeSpecies = "Forest-tundra"
@@ -30,12 +38,15 @@ const (
 	TreeSpeciesPines                       TreeSpecies = "Pines"
 )
 
-var DensityOverBarkOfTreesDict map[ForestType]map[TreeSpecies]float64 = map[ForestType]map[TreeSpecies]float64{
+var DensityOverBarkOfTreesRainfall map[ForestType]map[RainfallType]float64 = map[ForestType]map[RainfallType]float64{
 	ForestTypeTropicalSubtropical: {
-		TreeSpeciesMoist: 0.55,
-		TreeSpeciesDry:   0.55,
-		TreeSpeciesWet:   0.55,
+		RainfallTypeMoist: 0.55,
+		RainfallTypeDry:   0.55,
+		RainfallTypeWet:   0.55,
 	},
+}
+
+var DensityOverBarkOfTreesDict map[ForestType]map[TreeSpecies]float64 = map[ForestType]map[TreeSpecies]float64{
 	ForestTypeTemperate: {
 		TreeSpeciesConiferous: 0.45,
 		TreeSpeciesBroadleaf:  0.45,
@@ -48,10 +59,18 @@ var DensityOverBarkOfTreesDict map[ForestType]map[TreeSpecies]float64 = map[Fore
 	},
 }
 
-func DensityOverBarkOfTrees(forestType ForestType, specie TreeSpecies) decimal.Decimal {
+func DensityOverBarkOfTrees(forestType ForestType, specie TreeSpecies, rainfall RainfallType) decimal.Decimal {
+	baseValue := decimal.NewFromFloat(0.55)
+	if forestType == ForestTypeTropicalSubtropical {
+		value, ok := DensityOverBarkOfTreesRainfall[ForestTypeTropicalSubtropical][rainfall]
+		if !ok {
+			return baseValue
+		}
+		return decimal.NewFromFloat(value)
+	}
 	value, ok := DensityOverBarkOfTreesDict[forestType][specie]
 	if !ok {
-		return decimal.NewFromFloat(0.55)
+		return baseValue
 	}
 	return decimal.NewFromFloat(value)
 }
@@ -81,9 +100,9 @@ func BiomassExpansionFactor(forestType ForestType, specie TreeSpecies) decimal.D
 	return decimal.NewFromFloat(value)
 }
 
-var RootShootRatioForTreeDict map[ForestType]map[TreeSpecies]func(v float64) float64 = map[ForestType]map[TreeSpecies]func(v float64) float64{
+var RootShootRatioForTreeRainfall map[ForestType]map[RainfallType]func(v float64) float64 = map[ForestType]map[RainfallType]func(v float64) float64{
 	ForestTypeTropicalSubtropical: {
-		TreeSpeciesDry: func(v float64) float64 {
+		RainfallTypeDry: func(v float64) float64 {
 			if v <= 20 {
 				// default value
 				return 0.56
@@ -91,7 +110,7 @@ var RootShootRatioForTreeDict map[ForestType]map[TreeSpecies]func(v float64) flo
 				return 0.28
 			}
 		},
-		TreeSpeciesMoist: func(v float64) float64 {
+		RainfallTypeMoist: func(v float64) float64 {
 			if v <= 125 {
 				// default value
 				return 0.2
@@ -99,10 +118,13 @@ var RootShootRatioForTreeDict map[ForestType]map[TreeSpecies]func(v float64) flo
 				return 0.24
 			}
 		},
-		TreeSpeciesWet: func(v float64) float64 {
+		RainfallTypeWet: func(v float64) float64 {
 			return 0.37
 		},
 	},
+}
+
+var RootShootRatioForTreeDict map[ForestType]map[TreeSpecies]func(v float64) float64 = map[ForestType]map[TreeSpecies]func(v float64) float64{
 	ForestTypeTemperate: {
 		TreeSpeciesConiferous: func(v float64) float64 {
 			if v <= 50 {
@@ -130,7 +152,15 @@ var RootShootRatioForTreeDict map[ForestType]map[TreeSpecies]func(v float64) flo
 
 // abovegroundBiomass - 0 if you want to get default value
 // TODO: return Decimal
-func RootShootRatioForTree(forestType ForestType, species TreeSpecies, abovegroundBiomass float64) decimal.Decimal {
+func RootShootRatioForTree(forestType ForestType, species TreeSpecies, rainfall RainfallType, abovegroundBiomass float64) decimal.Decimal {
+	baseValue := decimal.NewFromFloat(0.25)
+	if forestType == ForestTypeTropicalSubtropical {
+		calc, ok := RootShootRatioForTreeRainfall[ForestTypeTropicalSubtropical][rainfall]
+		if !ok {
+			return baseValue
+		}
+		return decimal.NewFromFloat(calc(abovegroundBiomass))
+	}
 	if forestType == ForestTypeBoreal {
 		if abovegroundBiomass <= 75 {
 			// default value
@@ -141,7 +171,7 @@ func RootShootRatioForTree(forestType ForestType, species TreeSpecies, abovegrou
 	}
 	calc, ok := RootShootRatioForTreeDict[forestType][species]
 	if !ok {
-		return decimal.NewFromFloat(0.25)
+		return baseValue
 	}
 	return decimal.NewFromFloat(calc(abovegroundBiomass))
 }
