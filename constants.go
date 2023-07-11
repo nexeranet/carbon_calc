@@ -11,7 +11,7 @@ type ForestType string
 
 type TreeSpecies string
 
-type RainfallType int64
+type RainfallType uint8
 
 const (
 	RainfallTypeDry RainfallType = iota
@@ -28,9 +28,6 @@ const (
 )
 
 const (
-	// TreeSpeciesDry                         TreeSpecies = "Dry"
-	// TreeSpeciesMoist                       TreeSpecies = "Moist"
-	// TreeSpeciesWet                         TreeSpecies = "Wet"
 	TreeSpeciesConiferous                  TreeSpecies = "Coniferous"
 	TreeSpeciesBroadleaf                   TreeSpecies = "Broadleaf"
 	TreeSpeciesForestTundra                TreeSpecies = "Forest-tundra"
@@ -151,7 +148,6 @@ var RootShootRatioForTreeDict map[ForestType]map[TreeSpecies]func(v float64) flo
 }
 
 // abovegroundBiomass - 0 if you want to get default value
-// TODO: return Decimal
 func RootShootRatioForTree(forestType ForestType, species TreeSpecies, rainfall RainfallType, abovegroundBiomass float64) decimal.Decimal {
 	baseValue := decimal.NewFromFloat(0.25)
 	if forestType == ForestTypeTropicalSubtropical {
@@ -174,4 +170,14 @@ func RootShootRatioForTree(forestType ForestType, species TreeSpecies, rainfall 
 		return baseValue
 	}
 	return decimal.NewFromFloat(calc(abovegroundBiomass))
+}
+
+func GetRainfallType(rainfallAmount int64) RainfallType {
+	if rainfallAmount >= 2000 {
+		return RainfallTypeWet
+	} else if rainfallAmount < 2000 && rainfallAmount > 1000 {
+		return RainfallTypeMoist
+	} else {
+		return RainfallTypeDry
+	}
 }
