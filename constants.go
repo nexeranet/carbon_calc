@@ -7,9 +7,9 @@ import (
 
 var NotEnoughHeight = errors.New("Trees should be more than 1.3 m tall to be considered in the carbon calculation.")
 
-type ForestType string
+type ForestType uint8
 
-type TreeSpecies string
+type TreeSpecies uint8
 
 type RainfallType uint8
 
@@ -22,17 +22,17 @@ const (
 // TODO: ask about this to front-end team
 // TODO: change to uint constants
 const (
-	ForestTypeTropicalSubtropical ForestType = "Tropical and sub-tropical"
-	ForestTypeTemperate           ForestType = "Temperate"
-	ForestTypeBoreal              ForestType = "Boreal"
+	ForestTypeTropicalSubtropical ForestType = iota
+	ForestTypeTemperate
+	ForestTypeBoreal
 )
 
 const (
-	TreeSpeciesConiferous                  TreeSpecies = "Coniferous"
-	TreeSpeciesBroadleaf                   TreeSpecies = "Broadleaf"
-	TreeSpeciesForestTundra                TreeSpecies = "Forest-tundra"
-	TreeSpeciesMixedConiferousAndBroadleaf TreeSpecies = "Mixed coniferous & broadleaf"
-	TreeSpeciesPines                       TreeSpecies = "Pines"
+	TreeSpeciesConiferous TreeSpecies = iota
+	TreeSpeciesBroadleaf
+	TreeSpeciesForestTundra
+	TreeSpeciesMixedConiferousAndBroadleaf
+	TreeSpeciesPines
 )
 
 var DensityOverBarkOfTreesRainfall map[ForestType]map[RainfallType]float64 = map[ForestType]map[RainfallType]float64{
