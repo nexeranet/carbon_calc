@@ -25,7 +25,7 @@ func CarbonPerTree(fraction, radius, height, form, density, biomass, ratio decim
 		fraction = decimal.NewFromFloat(0.47)
 	}
 	if form.Equal(decimal.Zero) {
-		form = decimal.NewFromFloat(0.3)
+		form = decimal.NewFromFloat(0.25)
 	}
 	return decimal.NewFromFloat(44.0 / 12.0).
 		Mul(fraction).
